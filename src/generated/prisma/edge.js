@@ -201,7 +201,7 @@ const config = {
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../.env"
   },
   "relativePath": "../../../prisma",
@@ -211,11 +211,12 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": "postgresql://sociallydatabase_owner:npg_IK4FXNRomnM0@ep-fragrant-darkness-abk6rnx8-pooler.eu-west-2.aws.neon.tech/sociallydatabase?sslmode=require"
+        "value": null
       }
     }
   },
