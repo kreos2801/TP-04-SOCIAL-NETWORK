@@ -16,13 +16,13 @@ export default async function Home() {
         {user ? <CreatePost /> : null}
 
         <div className="space-y-6">
-        {posts.map((post) => (
+          {posts.map((post) => (
             <PostCard key={post.id} post={post} dbUserId={dbUserId} />
           ))}
         </div>
       </div>
-      
-      <div className="lg:col-span-4 sticky top-20">
+
+      <div className="hidden lg:block lg:col-span-4 sticky top-20">
         <WhoToFollow />
       </div>
     </div>
