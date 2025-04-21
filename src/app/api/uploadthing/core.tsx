@@ -1,3 +1,4 @@
+// Modifier le fichier src/app/api/uploadthing/core.tsx pour gérer correctement le type
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { auth } from "@clerk/nextjs/server";
 
@@ -13,7 +14,9 @@ export const ourFileRouter = {
   })
     .middleware(async () => {
       // this code runs on your server before upload
-      const { userId } = await auth();
+      const { userId } = auth();
+      
+      // Vérifier si userId existe, sinon lever une erreur
       if (!userId) throw new Error("Unauthorized");
 
       // whatever is returned here is accessible in onUploadComplete as `metadata`
