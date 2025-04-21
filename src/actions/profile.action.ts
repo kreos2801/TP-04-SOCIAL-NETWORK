@@ -1,197 +1,94 @@
-"use server";
+// Mock implementation for static export
 
-import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { getDbUserId } from "./user.action";
+// Mock data
+const MOCK_USERS = [
+  {
+    id: "user1",
+    name: "Demo User",
+    username: "demo_user",
+    bio: "This is a demo profile for the static export version.",
+    image: "/avatar.png",
+    location: "Internet",
+    website: "https://example.com",
+    createdAt: new Date().toISOString(),
+    _count: {
+      followers: 42,
+      following: 24,
+      posts: 10,
+    }
+  },
+  {
+    id: "user2",
+    name: "Admin",
+    username: "admin",
+    bio: "Administrator account",
+    image: "/avatar.png",
+    location: "Server Room",
+    website: "https://admin.example.com",
+    createdAt: new Date().toISOString(),
+    _count: {
+      followers: 100,
+      following: 50,
+      posts: 30,
+    }
+  },
+  {
+    id: "user3",
+    name: "Test User",
+    username: "test_user",
+    bio: "Just a test account",
+    image: "/avatar.png",
+    location: "Testland",
+    website: "https://test.example.com",
+    createdAt: new Date().toISOString(),
+    _count: {
+      followers: 15,
+      following: 30,
+      posts: 5,
+    }
+  }
+];
+
+const MOCK_POSTS = Array(10).fill(null).map((_, i) => ({
+  id: `post-${i}`,
+  authorId: i % 3 === 0 ? "user1" : i % 3 === 1 ? "user2" : "user3",
+  content: `This is a sample post ${i+1} for the static export version.`,
+  image: null,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  author: {
+    id: i % 3 === 0 ? "user1" : i % 3 === 1 ? "user2" : "user3",
+    name: i % 3 === 0 ? "Demo User" : i % 3 === 1 ? "Admin" : "Test User",
+    username: i % 3 === 0 ? "demo_user" : i % 3 === 1 ? "admin" : "test_user",
+    image: "/avatar.png",
+  },
+  comments: [],
+  likes: [],
+  _count: {
+    likes: Math.floor(Math.random() * 10),
+    comments: Math.floor(Math.random() * 5),
+  },
+}));
 
 export async function getProfileByUsername(username: string) {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { username: username },
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        bio: true,
-        image: true,
-        location: true,
-        website: true,
-        createdAt: true,
-        _count: {
-          select: {
-            followers: true,
-            following: true,
-            posts: true,
-          },
-        },
-      },
-    });
-
-    return user;
-  } catch (error) {
-    console.error("Error fetching profile:", error);
-    throw new Error("Failed to fetch profile");
-  }
+  return MOCK_USERS.find(user => user.username === username) || null;
 }
 
 export async function getUserPosts(userId: string) {
-  try {
-    const posts = await prisma.post.findMany({
-      where: {
-        authorId: userId,
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            image: true,
-          },
-        },
-        comments: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                username: true,
-                image: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
-        likes: {
-          select: {
-            userId: true,
-          },
-        },
-        _count: {
-          select: {
-            likes: true,
-            comments: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return posts;
-  } catch (error) {
-    console.error("Error fetching user posts:", error);
-    throw new Error("Failed to fetch user posts");
-  }
+  return MOCK_POSTS.filter(post => post.authorId === userId);
 }
 
 export async function getUserLikedPosts(userId: string) {
-  try {
-    const likedPosts = await prisma.post.findMany({
-      where: {
-        likes: {
-          some: {
-            userId,
-          },
-        },
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            image: true,
-          },
-        },
-        comments: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                username: true,
-                image: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
-        likes: {
-          select: {
-            userId: true,
-          },
-        },
-        _count: {
-          select: {
-            likes: true,
-            comments: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return likedPosts;
-  } catch (error) {
-    console.error("Error fetching liked posts:", error);
-    throw new Error("Failed to fetch liked posts");
-  }
+  // Return some mock posts as liked posts
+  return MOCK_POSTS.slice(0, 3);
 }
 
 export async function updateProfile(formData: FormData) {
-  try {
-    const { userId: clerkId } = await auth();
-    if (!clerkId) throw new Error("Unauthorized");
-
-    const name = formData.get("name") as string;
-    const bio = formData.get("bio") as string;
-    const location = formData.get("location") as string;
-    const website = formData.get("website") as string;
-
-    const user = await prisma.user.update({
-      where: { clerkId },
-      data: {
-        name,
-        bio,
-        location,
-        website,
-      },
-    });
-
-    revalidatePath("/profile");
-    return { success: true, user };
-  } catch (error) {
-    console.error("Error updating profile:", error);
-    return { success: false, error: "Failed to update profile" };
-  }
+  // Mock implementation for static export
+  return { success: true, user: MOCK_USERS[0] };
 }
 
 export async function isFollowing(userId: string) {
-  try {
-    const currentUserId = await getDbUserId();
-    if (!currentUserId) return false;
-
-    const follow = await prisma.follows.findUnique({
-      where: {
-        followerId_followingId: {
-          followerId: currentUserId,
-          followingId: userId,
-        },
-      },
-    });
-
-    return !!follow;
-  } catch (error) {
-    console.error("Error checking follow status:", error);
-    return false;
-  }
+  // Mock implementation for static export
+  return Math.random() > 0.5; // Randomly return true or false
 }
